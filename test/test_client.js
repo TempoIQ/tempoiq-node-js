@@ -23,12 +23,11 @@ describe("Client", function() {
   describe("Device provisioning", function() {
     it("creates a device", function(done) {
       var client = _getClient();
-      client.createDevice({
-	key: "stubbed_key",
+      client.createDevice(new tempoiq.Device("stubbed_key", {
 	name: "stubbed_name",
 	attributes: {attr1: "value1"},
 	sensors: []
-      }, function(device, err) {
+      }), function(err, device) {
 	if (err) throw err;
 	assert.equal("stubbed_key", device.key);
 	assert.equal("stubbed_name", device.name);
