@@ -4,7 +4,8 @@ var assert = require("assert");
 var tempoiq = require("../lib/tempoiq");
 
 var _getClient = function() {
-  return tempoiq.Client("key", "secret", "host");
+  var creds = require('./integration-credentials.json')
+  return tempoiq.Client(creds.key, creds.secret, creds.host, {port: creds.port, secure: creds.secure});
 }
 
 describe("Client", function() {
