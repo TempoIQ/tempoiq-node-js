@@ -8,11 +8,38 @@ var StubbedSession = require("../lib/session/stubbed_session");
 var _getClient = function() {
   if (process.env.INTEGRATION) {
     var creds = require('./integration-credentials.json')
-    return tempoiq.Client(creds.key, creds.secret, creds.host, {port: creds.port, secure: creds.secure});
+    return tempoiq.Client(creds.key, creds.secret, creds.hostname, {port: creds.port, secure: creds.secure});
   } else {
     return tempoiq.Client("stubbed_key", "stubbed_secret", "stubbed_host", {secure: false, session: new StubbedSession})
   }
 }
+
+var _createDevice = function(callback) {
+  var client = _getClient();
+  var stubbed_body = {
+    key: "device1",
+    name: "My Awesome Device",
+    attributes: {building: "1234"},
+    sensors: []
+  };
+  client._session.stub("POST", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
+  client.createDevice(new tempoiq.Device("device"), function(err, device) {
+    if (err) throw err;
+    callback(device);
+  });
+};
+
+var _deleteDevices = function(callback) {
+  var client = _getClient();
+  var stubbed_body = {
+    deleted: 1
+  };
+  client._session.stub("DELETE", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
+  client.deleteDevices({devices: "all"}, function(err, summary) {
+    if (err) throw err;
+    callback(summary);
+  });
+};
 
 describe("Client", function() {
   describe("Initialization", function() {
@@ -28,6 +55,18 @@ describe("Client", function() {
   })
 
   describe("Device provisioning", function() {
+    beforeEach(function(done) {
+      _deleteDevices(function(summary) {
+	done();
+      });
+    });
+
+    afterEach(function(done) {
+      _deleteDevices(function(summary) {
+	done();
+      });
+    });
+
     it("creates a device", function(done) {
       var client = _getClient();
       var stubbed_body = {
@@ -49,6 +88,21 @@ describe("Client", function() {
 	assert.equal(0, device.sensors.length);
 	done();
       });
+    });
+
+    it("deletes a device", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+	var stubbed_body = {
+	  deleted: 1
+	};
+	client._session.stub("DELETE", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
+	client.deleteDevices({devices: {key: device.key}}, function(err, summary) {
+	  if (err) throw err;
+	  assert.equal(1, summary.deleted);
+	  done();
+	});
+      })
     });
   });
 });
