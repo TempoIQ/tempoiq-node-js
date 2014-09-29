@@ -104,5 +104,21 @@ describe("Client", function() {
 	});
       })
     });
+
+    it("updates a device", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+	var originalName = device.name;
+	device.name = "Updated";
+	assert.notEqual(originalName, device.name);
+
+	client._session.stub("PUT", "/v2/devices/"+device.key, 200, JSON.stringify(device), {});
+	client.updateDevice(device, function(err, updatedDevice) {
+	  if (err) throw err;
+	  assert.equal(device.name, updatedDevice.name);
+	  done();
+	});
+      });
+    });
   });
 });
