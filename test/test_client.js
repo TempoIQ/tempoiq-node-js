@@ -120,5 +120,27 @@ describe("Client", function() {
 	});
       });
     });
+
+    it("gets a device", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+	client._session.stub("GET", "/v2/devices/"+device.key, 200, JSON.stringify(device), {});
+	client.getDevice(device.key, function(err, found) {
+	  if (err) throw err;
+	  assert.equal(device.key, found.key);
+	  done();
+	});
+      })
+    });
+
+    it("returns no device when not found", function(done) {
+      var client = _getClient();
+      client._session.stub("GET", "/v2/devices/not_found", 404, "", {});
+      client.getDevice("not_found", function(err, found) {
+	if (err) throw err;
+	assert.equal(null, found);
+	done();
+      });
+    });
   });
 });
