@@ -112,7 +112,7 @@ describe("Client", function() {
 	device.name = "Updated";
 	assert.notEqual(originalName, device.name);
 
-	client._session.stub("PUT", "/v2/devices/"+device.key, 200, JSON.stringify(device), {});
+	client._session.stub("PUT", "/v2/devices/"+encodeURIComponent(device.key), 200, JSON.stringify(device), {});
 	client.updateDevice(device, function(err, updatedDevice) {
 	  if (err) throw err;
 	  assert.equal(device.name, updatedDevice.name);
@@ -124,7 +124,7 @@ describe("Client", function() {
     it("gets a device", function(done) {
       var client = _getClient();
       _createDevice(function(device) {
-	client._session.stub("GET", "/v2/devices/"+device.key, 200, JSON.stringify(device), {});
+	client._session.stub("GET", "/v2/devices/"+encodeURIComponent(device.key), 200, JSON.stringify(device), {});
 	client.getDevice(device.key, function(err, found) {
 	  if (err) throw err;
 	  assert.equal(device.key, found.key);
