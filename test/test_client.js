@@ -151,9 +151,15 @@ describe("Client", function() {
 	};
 
 	client._session.stub("GET", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
-	client.listDevices({devices: {key: device.key}}, {chunkedRead: false}, function(device) {
-	  assert.equal(device.key, device.key);
-	  done();
+	client.listDevices({devices: {key: device.key}}, function(cursor) {
+	  var dev = [];
+	  cursor.on('data', function(device) {
+	    dev.push(device);
+	  }).on('end', function() {
+	    assert.equal(1, dev.length);
+	    assert.equal(device.key, dev[0].key);
+	    done();
+	  });
 	});
       });
     });
