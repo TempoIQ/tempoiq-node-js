@@ -69,13 +69,13 @@ describe("Client", function() {
 
     it("creates a device", function(done) {
       var client = _getClient();
-      var stubbed_body = {
+      var stubbedBody = {
 	key: "stubbed_key",
 	name: "stubbed_name",
 	attributes: {attr1: "value1"},
 	sensors: []
       };
-      client._session.stub("POST", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
+      client._session.stub("POST", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
       client.createDevice(new tempoiq.Device("stubbed_key", {
 	name: "stubbed_name",
 	attributes: {attr1: "value1"},
@@ -93,10 +93,10 @@ describe("Client", function() {
     it("deletes a device", function(done) {
       var client = _getClient();
       _createDevice(function(device) {
-	var stubbed_body = {
+	var stubbedBody = {
 	  deleted: 1
 	};
-	client._session.stub("DELETE", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
+	client._session.stub("DELETE", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
 	client.deleteDevices({devices: {key: device.key}}, function(err, summary) {
 	  if (err) throw err;
 	  assert.equal(1, summary.deleted);
@@ -140,6 +140,21 @@ describe("Client", function() {
 	if (err) throw err;
 	assert.equal(null, found);
 	done();
+      });
+    });
+
+    it("lists the devices", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+	var stubbedBody = {
+	  data: [device]
+	};
+
+	client._session.stub("GET", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
+	client.listDevices({devices: {key: device.key}}, {chunkedRead: false}, function(device) {
+	  assert.equal(device.key, device.key);
+	  done();
+	});
       });
     });
   });
