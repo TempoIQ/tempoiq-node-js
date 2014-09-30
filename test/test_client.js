@@ -174,7 +174,7 @@ describe("Client", function() {
 	};
 
 	client._session.stub("GET", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
-	client.listDevices({devices: {key: device.key}}, {streamed: false}, function(err, devices) {
+	client.listDevices({devices: {key: device.key}}, function(err, devices) {
 	  if (err) throw err;
 	  assert.equal(1, devices.length);
 	  assert.equal(device.key, devices[0].key);
