@@ -143,7 +143,7 @@ describe("Client", function() {
       });
     });
 
-    it("lists the devices", function(done) {
+    it("lists the devices with streaming", function(done) {
       var client = _getClient();
       _createDevice(function(device) {
 	var stubbedBody = {
@@ -151,7 +151,7 @@ describe("Client", function() {
 	};
 
 	client._session.stub("GET", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
-	client.listDevices({devices: {key: device.key}}, function(cursor) {
+	client.listDevices({devices: {key: device.key}}, {streamed: true}, function(cursor) {
 	  var dev = [];
 	  cursor.on('data', function(device) {
 	    dev.push(device);
@@ -159,7 +159,26 @@ describe("Client", function() {
 	    assert.equal(1, dev.length);
 	    assert.equal(device.key, dev[0].key);
 	    done();
+	  }).on('error', function(e) {
+	    throw e;
 	  });
+	});
+      });
+    });
+
+    it("lists the devices without streaming", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+	var stubbedBody = {
+	  data: [device]
+	};
+
+	client._session.stub("GET", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
+	client.listDevices({devices: {key: device.key}}, {streamed: false}, function(err, devices) {
+	  if (err) throw err;
+	  assert.equal(1, devices.length);
+	  assert.equal(device.key, devices[0].key);
+	  done();
 	});
       });
     });
