@@ -209,6 +209,24 @@ describe("Client", function() {
   });
 
   describe("Device writing", function() {
+    it("bulk writes", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+	var ts = new Date(2012,1,1);
+	var deviceKey = device.key;
+	var sensorKey = device.sensors[0].key;
+
+	client._session.stub("POST", "/v2/write", 200, null, {});
+
+	var write = new tempoiq.BulkWrite;
+	write.push(deviceKey, sensorKey, new tempoiq.DataPoint(ts, 1.23));
+	client.writeBulk(write, function(err, status) {
+	  assert(status.success);
+	  done();
+	});
+      });
+    });
+
     it("writes to a device", function(done) {
       var client = _getClient();
       _createDevice(function(device) {
@@ -220,7 +238,8 @@ describe("Client", function() {
 	client._session.stub("POST", "/v2/write", 200, null, {});
 	var values = {};
 	values[sensorKey] = 1.23;
-	client.writeDevice(deviceKey, sensorKey, ts, values, function(written) {
+	client.writeDevice(deviceKey, sensorKey, ts, values, function(err, written) {
+	  if (err) throw err;
 	  assert(written);
 	  done();
 	});
