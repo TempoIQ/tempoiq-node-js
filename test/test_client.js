@@ -227,6 +227,34 @@ describe("Client", function() {
       });
     });
 
+    it("handles partial write failure", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+
+	var ts = new Date(2012,1,1);
+	var deviceKey = device.key;
+	var sensorKey = device.sensors[0].key;
+
+	var stubbedBody = {
+	  device1: {
+	    success: false,
+	    message: "error writing to storage: FERR_NO_SENSOR: No sensor with key found in device."
+	  }
+	};
+	client._session.stub("POST", "/v2/write", 207, JSON.stringify(stubbedBody));
+
+	var write = new tempoiq.BulkWrite;
+	write.push(deviceKey, sensorKey, new tempoiq.DataPoint(ts, 1.23));
+	write.push(deviceKey, "not_here", new tempoiq.DataPoint(ts, 2.34));
+	client.writeBulk(write, function(err, status) {
+	  if (err) throw err;
+	  assert(status.partialSuccess);
+	  assert(!status.success);
+	  done();
+	});
+      });
+    });
+
     it("writes to a device", function(done) {
       var client = _getClient();
       _createDevice(function(device) {
