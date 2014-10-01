@@ -20,10 +20,34 @@ var _createDevice = function(callback) {
     key: "device1",
     name: "My Awesome Device",
     attributes: {building: "1234"},
-    sensors: []
+    sensors: [
+      {
+	key: "sensor1",
+	name: "My Sensor",
+	attributes: {unit: "F"}
+      },
+      {
+	key: "sensor2",
+	name: "My Sensor2",
+	attributes: {unit: "C"}
+      }
+    ]
   };
   client._session.stub("POST", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
-  client.createDevice(new tempoiq.Device("device"), function(err, device) {
+  client.createDevice(new tempoiq.Device("device", {
+    name: "My Awesome Device",
+    attributes: {building: "1234"},
+    sensors: [
+      new tempoiq.Sensor("sensor1", {
+	name: "My Sensor",
+	attributes: {unit: "F"}
+      }),
+      new tempoiq.Sensor("sensor2", {
+	name: "My Sensor2",
+	attributes: {unit: "C"}
+      })
+    ]
+  }), function(err, device) {
     if (err) throw err;
     callback(device);
   });
@@ -178,6 +202,26 @@ describe("Client", function() {
 	  if (err) throw err;
 	  assert.equal(1, devices.length);
 	  assert.equal(device.key, devices[0].key);
+	  done();
+	});
+      });
+    });
+  });
+
+  describe("Device writing", function() {
+    it("writes to a device", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+
+	var ts = new Date(2012,1,1);
+	var deviceKey = device.key;
+	var sensorKey = device.sensors[0].key;
+
+	client._session.stub("POST", "/v2/write", 200, null, {});
+	var values = {};
+	values[sensorKey] = 1.23;
+	client.writeDevice(deviceKey, sensorKey, ts, values, function(written) {
+	  assert(written);
 	  done();
 	});
       });
