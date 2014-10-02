@@ -66,6 +66,18 @@ var _deleteDevices = function(callback) {
 };
 
 describe("Client", function() {
+  beforeEach(function(done) {
+    _deleteDevices(function(summary) {
+      done();
+    });
+  });
+
+  afterEach(function(done) {
+    _deleteDevices(function(summary) {
+      done();
+    });
+  });
+
   describe("Initialization", function() {
     it("creates the client with the correct construction parameters", function() {
       var client = tempoiq.Client("key", "secret", "host", {
@@ -79,18 +91,6 @@ describe("Client", function() {
   })
 
   describe("Device provisioning", function() {
-    beforeEach(function(done) {
-      _deleteDevices(function(summary) {
-	done();
-      });
-    });
-
-    afterEach(function(done) {
-      _deleteDevices(function(summary) {
-	done();
-      });
-    });
-
     it("creates a device", function(done) {
       var client = _getClient();
       var stubbedBody = {
