@@ -274,4 +274,10 @@ describe("Client", function() {
       });
     });
   });
+
+  describe("Device reading", function() {
+    it("reads with a pipeline", function(done) {
+      done();
+    });
+  });
 });
