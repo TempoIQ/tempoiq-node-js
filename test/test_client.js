@@ -266,7 +266,7 @@ describe("Client", function() {
 	client._session.stub("POST", "/v2/write", 200, null, {});
 	var values = {};
 	values[sensorKey] = 1.23;
-	client.writeDevice(deviceKey, sensorKey, ts, values, function(err, written) {
+	client.writeDevice(deviceKey, ts, values, function(err, written) {
 	  if (err) throw err;
 	  assert(written);
 	  done();
@@ -277,7 +277,58 @@ describe("Client", function() {
 
   describe("Device reading", function() {
     it("reads with a pipeline", function(done) {
-      done();
+      var client = _getClient();
+      _createDevice(function(device) {
+
+	var ts = new Date(2012,1,1,1);
+	var start = new Date(2012,1,1);
+	var end = new Date(2012,1,2);
+
+	var deviceKey = device.key;
+	var sensorKey1 = device.sensors[0].key;
+	var sensorKey2 = device.sensors[1].key;
+
+	client._session.stub("POST", "/v2/write", 200);
+
+	var d1 = {}
+	d1[sensorKey1] = 4.0;
+	d1[sensorKey2] = 2.0;
+
+	// Welcome to callback city.
+	client.writeDevice(deviceKey, new Date(2012, 1, 1, 1), d1, function(err, written) {
+	  if (err) throw err;
+	  client.writeDevice(deviceKey, new Date(2012, 1, 1, 2), d1, function(err, written) {
+	    if (err) throw err;
+
+	    var data = {}
+	    data[deviceKey] = {mean: 6.0};
+	    var stubbedRead = {
+	      data: [
+		{
+		  t: start.toISOString(),
+		  data: data
+		}
+	      ]
+	    };
+
+	    client._session.stub("GET", "/v2/read", 200, JSON.stringify(stubbedRead));
+	    var deviceSel = {}
+	    deviceSel["key"] = deviceKey;
+
+	    var pipeline = new tempoiq.Pipeline;
+	    pipeline.rollup("1day", "sum", start);
+	    pipeline.aggregate("mean");
+	    client.read({devices: deviceSel}, pipeline, start, end, {}, function(res) {
+	      res.on("data", function(row) {
+		assert.equal(start.toString(), row.ts.toString());
+		assert.equal(6.0, row.value(deviceKey, "mean"));
+	      }).on("end", function() {
+		done();
+	      });
+	    });
+	  });
+	});
+      });
     });
   });
 });
