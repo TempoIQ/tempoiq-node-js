@@ -114,6 +114,18 @@ describe("Client", function() {
       });
     });
 
+    it("deletes a device by key", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+	client._session.stub("DELETE", "/v2/devices/"+encodeURIComponent(device.key), 200);
+
+	client.deleteDevice(device.key, function(err, deleted) {
+	  assert(deleted);
+	  done();
+	});
+      });
+    });
+
     it("deletes a device", function(done) {
       var client = _getClient();
       _createDevice(function(device) {
