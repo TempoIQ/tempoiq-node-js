@@ -330,7 +330,7 @@ describe("Client", function() {
 	    var pipeline = new tempoiq.Pipeline;
 	    pipeline.rollup("1day", "sum", start);
 	    pipeline.aggregate("mean");
-	    client.read({devices: deviceSel}, pipeline, start, end, {}, function(res) {
+	    client.read({devices: deviceSel}, start, end, pipeline, {}, function(res) {
 	      res.on("data", function(row) {
 		assert.equal(start.toString(), row.ts.toString());
 		assert.equal(6.0, row.value(deviceKey, "mean"));
@@ -382,7 +382,7 @@ describe("Client", function() {
 	  var deviceSel = {}
 	  deviceSel["key"] = deviceKey;
 
-	  client.read({devices: deviceSel}, null, start, end, {}, function(res) {
+	  client.read({devices: deviceSel}, start, end, null, {}, function(res) {
 	    res.on("data", function(row) {
 	      assert.equal(ts.toString(), row.ts.toString());
 	      assert.equal(4.0, row.value(deviceKey, sensorKey1));
@@ -394,5 +394,52 @@ describe("Client", function() {
 	});
       });
     });
+
+    // it("reads without streaming", function(done) {
+    //   var client = _getClient();
+    //   _createDevice(function(device) {
+
+    // 	var ts = new Date(2012,1,1,1);
+    // 	var start = new Date(2012,1,1);
+    // 	var end = new Date(2012,1,2);
+
+    // 	var deviceKey = device.key;
+    // 	var sensorKey1 = device.sensors[0].key;
+    // 	var sensorKey2 = device.sensors[1].key;
+
+    // 	client._session.stub("POST", "/v2/write", 200);
+
+    // 	var d1 = {}
+    // 	d1[sensorKey1] = 4.0;
+    // 	d1[sensorKey2] = 2.0;
+
+    // 	client.writeDevice(deviceKey, ts, d1, function(err, written) {
+    // 	  if (err) throw err;
+
+    // 	  var data = {}
+    // 	  var sensors = {};
+    // 	  sensors[sensorKey1] = 4.0;
+    // 	  sensors[sensorKey2] = 2.0;
+    // 	  data[deviceKey] = sensors;
+    // 	  var stubbedRead = {
+    // 	    data: [
+    // 	      {
+    // 		t: ts.toISOString(),
+    // 		data: data
+    // 	      }
+    // 	    ]
+    // 	  };
+
+    // 	  client._session.stub("GET", "/v2/read", 200, JSON.stringify(stubbedRead));
+    // 	  var deviceSel = {}
+    // 	  deviceSel["key"] = deviceKey;
+
+    // 	  client.read({devices: deviceSel}, null, start, end, {streamed: false}, function(err, rows) {
+    // 	    assert.equal(1, rows.size());
+    // 	    done();
+    // 	  });
+    // 	});
+    //   });
+    // });
   });
 });
