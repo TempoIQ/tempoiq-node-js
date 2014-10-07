@@ -436,7 +436,7 @@ describe("Client", function() {
     	  var deviceSel = {}
     	  deviceSel["key"] = deviceKey;
 
-	  client.read({devices: deviceSel}, start, end, null, {streamed: false}, function(err, rows) {
+	  client.read({devices: deviceSel}, start, end, null, function(err, rows) {
 	    if (err) throw err;
 	    assert.equal(1, rows.length);
 	    assert.equal(ts.toString(), rows[0].ts.toString());
