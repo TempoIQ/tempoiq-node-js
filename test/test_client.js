@@ -280,7 +280,6 @@ describe("Client", function() {
 	values[sensorKey] = 1.23;
 	client.writeDevice(deviceKey, ts, values, function(err, written) {
 	  if (err) throw err;
-	  assert(written);
 	  done();
 	});
       });
