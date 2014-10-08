@@ -233,7 +233,7 @@ describe("Client", function() {
 	var write = new tempoiq.BulkWrite;
 	write.push(deviceKey, sensorKey, new tempoiq.DataPoint(ts, 1.23));
 	client.writeBulk(write, function(err, status) {
-	  assert(status.success);
+	  assert(status.isSuccess());
 	  done();
 	});
       });
@@ -260,8 +260,9 @@ describe("Client", function() {
 	write.push(deviceKey, "not_here", new tempoiq.DataPoint(ts, 2.34));
 	client.writeBulk(write, function(err, status) {
 	  if (err) throw err;
-	  assert(status.partialSuccess);
-	  assert(!status.success);
+	  assert(status.isPartialSuccess());
+	  assert(!status.isSuccess());
+	  assert(status.failures()[deviceKey] != undefined);
 	  done();
 	});
       });
