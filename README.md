@@ -1,9 +1,12 @@
-# TempoIQ HTTP NodeJS Client
+# TempoIQ HTTP NodeJS Library
 
 ## Installation
 
+The TempoIQ Node library is not yet listed in the central NPM database. You 
+can install it into your project from a local directory:
+
 ```
-npm install tempoiq-node-js
+npm install /path/to/tempoiq-node-js
 ```
 
 ## Quickstart
