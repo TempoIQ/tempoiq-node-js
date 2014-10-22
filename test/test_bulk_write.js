@@ -13,9 +13,9 @@ describe("BulkWrite", function() {
 
     var expected = {
       device1: {
-	sensor1: [
-	  {t: ts.toISOString(), v: 1.23}
-	]
+        sensor1: [
+          {t: ts.toISOString(), v: 1.23}
+        ]
       }
     };
 
