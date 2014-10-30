@@ -464,4 +464,111 @@ describe("Client", function() {
       });
     });
   });
+
+  describe("Latest value", function() {
+    it("gets latest value without streaming", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+
+        var ts = new Date(2012,1,1,1);
+        var start = new Date(2012,1,1);
+        var end = new Date(2012,1,2);
+
+        var deviceKey = device.key;
+        var sensorKey1 = device.sensors[0].key;
+        var sensorKey2 = device.sensors[1].key;
+        var pipeline = new tempoiq.Pipeline;
+
+        client._session.stub("POST", "/v2/write", 200);
+
+        var d1 = {}
+        d1[sensorKey1] = 4.0;
+        d1[sensorKey2] = 2.0;
+
+        client.writeDevice(deviceKey, ts, d1, function(err, written) {
+          if (err) throw err;
+
+          var data = {}
+          var sensors = {};
+          sensors[sensorKey1] = 4.0;
+          sensors[sensorKey2] = 2.0;
+          data[deviceKey] = sensors;
+          var stubbedRead = {
+            data: [
+              {
+                t: ts.toISOString(),
+                data: data
+              }
+            ]
+          };
+
+          client._session.stub("GET", "/v2/single", 200, JSON.stringify(stubbedRead));
+          var deviceSel = {}
+          deviceSel["key"] = deviceKey;
+
+          client.latest({devices: deviceSel}, pipeline, function(err, rows) {
+            if (err) throw err;
+            assert.equal(1, rows.length);
+            assert.equal(ts.toString(), rows[0].ts.toString());
+            done();
+          });
+        });
+      });
+    });
+
+    it("gets latest value with streaming", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+
+        var ts = new Date(2012,1,1,1);
+        var start = new Date(2012,1,1);
+        var end = new Date(2012,1,2);
+
+        var deviceKey = device.key;
+        var sensorKey1 = device.sensors[0].key;
+        var sensorKey2 = device.sensors[1].key;
+        var pipeline = new tempoiq.Pipeline;
+
+        client._session.stub("POST", "/v2/write", 200);
+
+        var d1 = {}
+        d1[sensorKey1] = 4.0;
+        d1[sensorKey2] = 2.0;
+
+        client.writeDevice(deviceKey, ts, d1, function(err, written) {
+          if (err) throw err;
+
+          var data = {}
+          var sensors = {};
+          sensors[sensorKey1] = 4.0;
+          sensors[sensorKey2] = 2.0;
+          data[deviceKey] = sensors;
+          var stubbedRead = {
+            data: [
+              {
+                t: ts.toISOString(),
+                data: data
+              }
+            ]
+          };
+
+          client._session.stub("GET", "/v2/single", 200, JSON.stringify(stubbedRead));
+          var deviceSel = {}
+          deviceSel["key"] = deviceKey;
+
+          client.latest({devices: deviceSel}, pipeline, {streamed: true}, function(cursor) {
+            var values = [];
+            cursor.on('data', function(value) {
+              values.push(value);
+            }).on('end', function() {
+              assert.equal(1, values.length);
+              done();
+            }).on('error', function(e) {
+              throw e;
+            });
+          });
+        });
+      });
+    });
+  });
 });
