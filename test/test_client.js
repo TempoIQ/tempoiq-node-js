@@ -420,12 +420,71 @@ describe("Client", function() {
       _createDevice(function(device) {
 
         var ts = new Date(2012,1,1,1);
+        var ts2 = new Date(2012,1,1,2);
         var start = new Date(2012,1,1);
         var end = new Date(2012,1,2);
 
         var deviceKey = device.key;
         var sensorKey1 = device.sensors[0].key;
         var sensorKey2 = device.sensors[1].key;
+
+        client._session.stub("POST", "/v2/write", 200);
+
+        var d1 = {}
+        d1[sensorKey1] = 4.0;
+        d1[sensorKey2] = 2.0;
+
+        var write = new tempoiq.BulkWrite;
+        write.push(deviceKey, sensorKey1, new tempoiq.DataPoint(ts, 1.23));
+        write.push(deviceKey, sensorKey1, new tempoiq.DataPoint(ts2, 1.23));
+        client.writeBulk(write, function(err, status) {
+          if (err) throw err;
+
+          var data = {}
+          var sensors = {};
+          sensors[sensorKey1] = 1.23;
+          data[deviceKey] = sensors;
+          var stubbedRead = {
+            data: [
+              {
+                t: ts.toISOString(),
+                data: data
+              },
+              {
+                t: ts2.toISOString(),
+                data: data
+              }
+            ]
+          };
+
+          client._session.stub("GET", "/v2/read", 200, JSON.stringify(stubbedRead));
+          var deviceSel = {}
+          deviceSel["key"] = deviceKey;
+
+          client.read({devices: deviceSel}, start, end, null, function(err, rows) {
+            if (err) throw err;
+            assert.equal(2, rows.length);
+            assert.equal(ts.toString(), rows[0].ts.toString());
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  describe("Latest value", function() {
+    it("gets latest value without streaming", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+
+        var ts = new Date(2012,1,1,1);
+        var start = new Date(2012,1,1);
+        var end = new Date(2012,1,2);
+
+        var deviceKey = device.key;
+        var sensorKey1 = device.sensors[0].key;
+        var sensorKey2 = device.sensors[1].key;
+        var pipeline = new tempoiq.Pipeline;
 
         client._session.stub("POST", "/v2/write", 200);
 
@@ -450,15 +509,122 @@ describe("Client", function() {
             ]
           };
 
-          client._session.stub("GET", "/v2/read", 200, JSON.stringify(stubbedRead));
+          client._session.stub("GET", "/v2/single", 200, JSON.stringify(stubbedRead));
           var deviceSel = {}
           deviceSel["key"] = deviceKey;
 
-          client.read({devices: deviceSel}, start, end, null, function(err, rows) {
+          client.latest({devices: deviceSel}, pipeline, function(err, rows) {
             if (err) throw err;
             assert.equal(1, rows.length);
             assert.equal(ts.toString(), rows[0].ts.toString());
             done();
+          });
+        });
+      });
+    });
+
+    it("gets latest value with streaming", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+
+        var ts = new Date(2012,1,1,1);
+        var start = new Date(2012,1,1);
+        var end = new Date(2012,1,2);
+
+        var deviceKey = device.key;
+        var sensorKey1 = device.sensors[0].key;
+        var sensorKey2 = device.sensors[1].key;
+        var pipeline = new tempoiq.Pipeline;
+
+        client._session.stub("POST", "/v2/write", 200);
+
+        var d1 = {}
+        d1[sensorKey1] = 4.0;
+        d1[sensorKey2] = 2.0;
+
+        client.writeDevice(deviceKey, ts, d1, function(err, written) {
+          if (err) throw err;
+
+          var data = {}
+          var sensors = {};
+          sensors[sensorKey1] = 4.0;
+          sensors[sensorKey2] = 2.0;
+          data[deviceKey] = sensors;
+          var stubbedRead = {
+            data: [
+              {
+                t: ts.toISOString(),
+                data: data
+              }
+            ]
+          };
+
+          client._session.stub("GET", "/v2/single", 200, JSON.stringify(stubbedRead));
+          var deviceSel = {}
+          deviceSel["key"] = deviceKey;
+
+          client.latest({devices: deviceSel}, pipeline, {streamed: true}, function(cursor) {
+            var values = [];
+            cursor.on('data', function(value) {
+              values.push(value);
+            }).on('end', function() {
+              assert.equal(1, values.length);
+              done();
+            }).on('error', function(e) {
+              throw e;
+            });
+          });
+        });
+      });
+    });
+  });
+
+  describe("Deleting datapoints", function() {
+    it("deletes datapoints from a device/sensor", function(done) {
+      var client = _getClient();
+      _createDevice(function(device) {
+
+        var ts = new Date(2012,1,1,1);
+        var start = new Date(2012,1,1);
+        var end = new Date(2012,1,2);
+
+        var deviceKey = device.key;
+        var sensorKey1 = device.sensors[0].key;
+        var sensorKey2 = device.sensors[1].key;
+        var pipeline = new tempoiq.Pipeline;
+
+        client._session.stub("POST", "/v2/write", 200);
+
+        var d1 = {}
+        d1[sensorKey1] = 4.0;
+        d1[sensorKey2] = 2.0;
+
+        client.writeDevice(deviceKey, ts, d1, function(err, written) {
+          if (err) throw err;
+
+          var data = {}
+          var sensors = {};
+          sensors[sensorKey1] = 4.0;
+          sensors[sensorKey2] = 2.0;
+          data[deviceKey] = sensors;
+          var stubbedDelete = {
+            deleted: 1
+          };
+
+          client._session.stub("DELETE", "/v2/devices/" + deviceKey + "/sensors/" + sensorKey1 + "/datapoints", 200, JSON.stringify(stubbedDelete));
+          var deviceSel = {}
+          deviceSel["key"] = deviceKey;
+
+          var write = new tempoiq.BulkWrite;
+          write.push(deviceKey, sensorKey1, new tempoiq.DataPoint(ts, 1.23));
+          client.writeBulk(write, function(err, status) {
+            assert(status.isSuccess());
+
+            client.deleteDatapoints(deviceKey, sensorKey1, start, end, function(err, summary) {
+              if (err) throw err;
+              assert.equal(summary.deleted, 1);
+              done();
+            });
           });
         });
       });
