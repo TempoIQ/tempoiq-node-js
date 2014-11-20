@@ -9,12 +9,12 @@ var StubbedSession = require("../lib/session/stubbed_session");
 // unlikely to conflict with existing devices in the backend
 var devicePrefix = "b90467087145fd06";
 
-var _getClient = function() {
+var _getClient = function(consumeStubs) {
   if (process.env.INTEGRATION) {
     var creds = require('./integration-credentials.json')
     return tempoiq.Client(creds.key, creds.secret, creds.hostname, {port: creds.port, secure: creds.secure});
   } else {
-    return tempoiq.Client("stubbed_key", "stubbed_secret", "stubbed_host", {secure: false, session: new StubbedSession})
+    return tempoiq.Client("stubbed_key", "stubbed_secret", "stubbed_host", {secure: false, session: new StubbedSession(consumeStubs)})
   }
 }
 
