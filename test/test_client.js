@@ -18,10 +18,9 @@ var _getClient = function(consumeStubs) {
   }
 }
 
-var _createDevice = function(callback) {
-  var client = _getClient();
+var _createDevice = function(client, key, callback, thisArgs ) {
   var stubbed_body = {
-    key: devicePrefix + "device1",
+    key: devicePrefix + key,
     name: "My Awesome Device",
     attributes: {building: "1234"},
     sensors: [
@@ -56,15 +55,13 @@ var _createDevice = function(callback) {
     ]
   };
   props.attributes[devicePrefix] = devicePrefix;
-  client.createDevice(new tempoiq.Device(devicePrefix + "device", props),
-  function(err, device) {
+  client.createDevice(new tempoiq.Device(devicePrefix + key, props), function(err, device) {
     if (err) throw err;
     callback(device);
   });
 };
 
-var _deleteDevices = function(callback) {
-  var client = _getClient();
+var _deleteDevices = function(client, callback) {
   var stubbed_body = {
     deleted: 1
   };
@@ -81,13 +78,15 @@ var _deleteDevices = function(callback) {
 
 describe("Client", function() {
   beforeEach(function(done) {
-    _deleteDevices(function(summary) {
+    var client = _getClient();
+    _deleteDevices(client, function(summary) {
       done();
     });
   });
 
   afterEach(function(done) {
-    _deleteDevices(function(summary) {
+    var client = _getClient();
+    _deleteDevices(client, function(summary) {
       done();
     });
   });
@@ -135,7 +134,7 @@ describe("Client", function() {
 
     it("deletes a device by key", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
         client._session.stub("DELETE", "/v2/devices/"+encodeURIComponent(device.key), 200);
 
         client.deleteDevice(device.key, function(err, deleted) {
@@ -147,7 +146,7 @@ describe("Client", function() {
 
     it("deletes a device", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
         var stubbedBody = {
           deleted: 1
         };
@@ -162,7 +161,7 @@ describe("Client", function() {
 
     it("updates a device", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
         var originalName = device.name;
         device.name = "Updated";
         assert.notEqual(originalName, device.name);
@@ -178,7 +177,7 @@ describe("Client", function() {
 
     it("gets a device", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
         client._session.stub("GET", "/v2/devices/"+encodeURIComponent(device.key), 200, JSON.stringify(device), {});
         client.getDevice(device.key, function(err, found) {
           if (err) throw err;
@@ -200,7 +199,7 @@ describe("Client", function() {
 
     it("lists the devices with streaming", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
         var stubbedBody = {
           data: [device]
         };
@@ -223,7 +222,7 @@ describe("Client", function() {
 
     it("lists the devices without streaming", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
         var stubbedBody = {
           data: [device]
         };
@@ -237,12 +236,51 @@ describe("Client", function() {
         });
       });
     });
+
+    it("lists the devices with cursoring", function(done) {
+      var client = _getClient(true);
+      _createDevice(client, "device1", function(device1) {
+        _createDevice(client, "device2", function(device2) {
+          var nextQuery = {
+            search: {
+              select: "devices",
+              filters: {
+                devices: {attribute_key: devicePrefix}
+              },
+            },
+            find: {
+              quantifier: "all"
+            }
+          };
+
+          var stubbedBody = {
+            data: [device1],
+            next_page: {
+              next_query: nextQuery
+            }
+          };
+          client._session.stub("GET", "/v2/devices", 200, JSON.stringify(stubbedBody), {});
+
+          var nextList = stubbedBody;
+          delete nextList.next_page;
+          nextList["data"][0] = device1;
+
+          client._session.stub("GET", "/v2/devices", 200, JSON.stringify(nextList), {});
+
+          client.listDevices({devices: {attribute_key: devicePrefix}}, {limit: 1}, function(err, devices) {
+            if (err) throw err;
+            assert.equal(2, devices.length);
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe("Device writing", function() {
     it("bulk writes", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
         var ts = new Date(2012,1,1);
         var deviceKey = device.key;
         var sensorKey = device.sensors[0].key;
@@ -260,7 +298,7 @@ describe("Client", function() {
 
     it("handles partial write failure", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1);
         var deviceKey = device.key;
@@ -288,7 +326,7 @@ describe("Client", function() {
 
     it("writes to a device", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1);
         var deviceKey = device.key;
@@ -308,7 +346,7 @@ describe("Client", function() {
   describe("Device reading", function() {
     it("reads with a pipeline", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1,1);
         var start = new Date(2012,1,1);
@@ -365,7 +403,7 @@ describe("Client", function() {
 
     it("reads without a pipeline", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1,1);
         var start = new Date(2012,1,1);
@@ -417,7 +455,7 @@ describe("Client", function() {
 
     it("reads without streaming", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1,1);
         var ts2 = new Date(2012,1,1,2);
@@ -475,7 +513,7 @@ describe("Client", function() {
   describe("Latest value", function() {
     it("gets latest value without streaming", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1,1);
         var start = new Date(2012,1,1);
@@ -525,7 +563,7 @@ describe("Client", function() {
 
     it("gets latest value with streaming", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1,1);
         var start = new Date(2012,1,1);
@@ -582,7 +620,7 @@ describe("Client", function() {
   describe("Deleting datapoints", function() {
     it("deletes datapoints from a device/sensor", function(done) {
       var client = _getClient();
-      _createDevice(function(device) {
+      _createDevice(client, "device1", function(device) {
 
         var ts = new Date(2012,1,1,1);
         var start = new Date(2012,1,1);
