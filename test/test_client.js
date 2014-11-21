@@ -453,6 +453,87 @@ describe("Client", function() {
       });
     });
 
+    it("reads with cursoring", function(done) {
+      var client = _getClient(true);
+      _createDevice(client, "device1", function(device) {
+
+        var ts = new Date(2012,1,1,1);
+        var ts2 = new Date(2012, 1, 1, 2)
+        var start = new Date(2012,1,1);
+        var end = new Date(2012,1,2);
+
+        var deviceKey = device.key;
+        var sensorKey1 = device.sensors[0].key;
+        var sensorKey2 = device.sensors[1].key;
+
+        client._session.stub("POST", "/v2/write", 200);
+        client._session.stub("POST", "/v2/write", 200);
+
+        var d1 = {}
+        d1[sensorKey1] = 4.0;
+        d1[sensorKey2] = 2.0;
+
+        client.writeDevice(deviceKey, ts, d1, function(err, written) {
+          if (err) throw err;
+          client.writeDevice(deviceKey, ts2, d1, function(err, written) {
+            if (err) throw err;
+
+            var data = {}
+            var sensors = {};
+            sensors[sensorKey1] = 4.0;
+            sensors[sensorKey2] = 2.0;
+            data[deviceKey] = sensors;
+
+            var nextQuery = {
+              search: {
+                select: "devices",
+                filters: {devices: "all"}
+              },
+              read: {
+                start: ts.toISOString(),
+                stop: ts.toISOString()
+              },
+              fold: { functions: [] }
+            };
+
+            var stubbedRead = {
+              data: [
+                {
+                  t: ts.toISOString(),
+                  data: data
+                }
+              ],
+              next_page: {
+                next_query: nextQuery
+              }
+            };
+
+            client._session.stub("GET", "/v2/read", 200, JSON.stringify(stubbedRead));
+            
+            var nextRead = stubbedRead;
+            delete nextRead.next_page;
+            nextRead["data"][0]["t"] = ts2.toISOString();
+
+            client._session.stub("GET", "/v2/read", 200, JSON.stringify(nextRead));
+
+            var deviceSel = {}
+            deviceSel["key"] = deviceKey;
+            client.read({devices: deviceSel}, start, end, null, {limit: 1}, function(err, rows) {
+              if (err) throw err;
+              assert.equal(2, rows.length);
+              assert.equal(4.0, rows[0].value(deviceKey, sensorKey1));
+              assert.equal(2.0, rows[0].value(deviceKey, sensorKey2));
+
+              assert.equal(4.0, rows[1].value(deviceKey, sensorKey1));
+              assert.equal(2.0, rows[1].value(deviceKey, sensorKey2));
+
+              done();
+            });
+          });
+        });
+      });
+    });
+
     it("reads without streaming", function(done) {
       var client = _getClient();
       _createDevice(client, "device1", function(device) {
