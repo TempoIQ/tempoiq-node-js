@@ -4,6 +4,7 @@ var assert = require("assert");
 var tempoiq = require("../lib/tempoiq");
 
 var StubbedSession = require("../lib/session/stubbed_session");
+var LiveSession = require("../lib/session/live_session");
 
 // Tag test devices with a unique-ish attribute and key prefix so they're 
 // unlikely to conflict with existing devices in the backend
@@ -100,6 +101,22 @@ describe("Client", function() {
       assert.equal("secret", client.secret);
       assert.equal("host", client.host);
       assert.equal(80, client.port);
+    });
+
+    it("invokes callbacks even in the face of connection issues", function() {
+      var opts = {
+        port: 23432,
+        secure: false
+      };
+      if (!process.env.INTEGRATION) {
+        opts.session = new StubbedSession();
+      }
+
+      var client = tempoiq.Client("key", "secret", "not-found-hostname", opts);
+
+      client.listDevices({devices: "all"}, function(err, devices) {
+        if (!err) throw new Error("Should have received an error");
+      });
     });
   })
 
