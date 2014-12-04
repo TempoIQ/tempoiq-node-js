@@ -699,7 +699,7 @@ describe("Client", function() {
           var deviceSel = {}
           deviceSel["key"] = deviceKey;
 
-          client.single({devices: deviceSel}, {'function': 'before', 'timestamp': read_ts}, 
+          client.single({devices: deviceSel}, 'before', read_ts,
                         null, {streamed: true}, function(cursor) {
             var values = [];
             cursor.on('data', function(value) {
@@ -712,6 +712,7 @@ describe("Client", function() {
             });
           });
         });
+      });
     });
 
     it("gets latest value with a pipeline", function(done) {
@@ -754,7 +755,7 @@ describe("Client", function() {
           var deviceSel = {}
           deviceSel["key"] = deviceKey;
 
-          client.single({devices: deviceSel}, {'function': 'earliest'}, pipeline, {streamed: true}, function(cursor) {
+          client.single({devices: deviceSel}, 'earliest', null, pipeline, {streamed: true}, function(cursor) {
             var values = [];
             cursor.on('data', function(value) {
               values.push(value);
