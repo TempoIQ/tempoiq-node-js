@@ -3,7 +3,7 @@
   "description": "TempoIQ HTTP NodeJS Client",
   "version": "1.0.2",
   "author": "TempoIQ <support@tempoiq.com>",
-  "keywords": ["tempoiq", "time-series", "database"],
+  "keywords": ["tempoiq", "time-series", "analytics", "tempodb"],
   "main": "lib/tempoiq.js",
   "devDependencies": {
     "mocha": "1.21.4"
