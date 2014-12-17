@@ -1,0 +1,9 @@
+language: node_js
+deploy:
+  api_key:
+    secure: EhXo2fTBEbRX7t1bMGo59hv5A5EpRG/oBds3DDrTYmxaIOZkkBQeSinV/HxA1/akvCalMIZVDPVjgMT67y5hRAHO27b4uwoxOBjtjXlhf3IKGJrAbfBcLZFYy1lTnteMgvvhFjU8rbt4acmjhjpZ5NR8gwn26E6DJYJXkBC7H5s=
+  email: support@tempoiq.com
+  provider: npm
+  on:
+    tags: true
+    all_branches: true  # Workaround, see https://github.com/travis-ci/travis-ci/issues/1675
