@@ -1,13 +1,16 @@
-# TempoIQ HTTP NodeJS Library
+# TempoIQ Node.js Library
 
 ## Installation
 
-The TempoIQ Node library is not yet listed in the central NPM database. You 
-can install it into your project from a local directory:
+The TempoIQ Node.js library makes calls to the [TempoIQ API](https://tempoiq.com/). The module is available on npm as [tempoiq](https://www.npmjs.com/package/tempoiq):
 
-```
-npm install /path/to/tempoiq-node-js
-```
+    npm install tempoiq
+
+You can also check out this repository and install locally:
+
+    git clone https://github.com/TempoIQ/tempoiq-node-js.git
+    npm install ./tempoiq-node-js
+
 
 ## Quickstart
 
