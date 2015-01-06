@@ -3,11 +3,11 @@
 /**
  * Testing parsing snippets from a test file.
  * Snippets start with a line comment in the form:
- * // snippet-start key
+ * //  snippet-start key
  * where key is the snippet key. Mark the end of a snippet with:
- * // snippet-end
+ * //  snippet-end
  * Mark a line to be ignored when parsing snippets by ending the line with:
- * // snippet-ignore
+ * //  snippet-ignore
  *
  */
 
