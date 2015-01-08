@@ -3,7 +3,7 @@
 /**
  * Testing parsing snippets from a test file.
  * Snippets start with a line comment in the form:
- * //  snippet-start key
+ * //  snippet-begin key
  * where key is the snippet key. Mark the end of a snippet with:
  * //  snippet-end
  * Mark a line to be ignored when parsing snippets by ending the line with:
@@ -25,7 +25,7 @@ var _getClient = function(consumeStubs) {
   if (process.env.INTEGRATION) {
     var creds = require('./integration-credentials.json')
 
-    // snippet-start create-client
+    // snippet-begin create-client
     var client = tempoiq.Client(creds.key, creds.secret, creds.hostname, {port: creds.port, secure: creds.secure});
     // snippet-end
     return client;
@@ -57,7 +57,7 @@ var _createDevice = function(client, key, callback, thisArgs ) {
 
   client._session.stub("POST", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
 
-  // snippet-start create-device
+  // snippet-begin create-device
   var props = {
     name: "My Awesome Device",
     attributes: {building: "1234"},
