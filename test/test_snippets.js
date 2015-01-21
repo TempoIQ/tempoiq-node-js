@@ -1,53 +1,98 @@
-// snippet-begin create-client
+var assert = require('assert');
+var tempoiq = require('../lib/tempoiq');
+var creds = require('./snippet-credentials.json');
 
+
+/*
+ * A function block that never gets executed. For snippets that we don't
+ * want to test
+ */
+var snippetsUntested = function() {
+    // snippet-begin create-client
     var tempoiq = require('tempoiq');
-    var client = tempoiq.Client(<TEMPO_KEY>,
-                                <TEMPO_SECRET>,
-                                <TEMPO_HOST>);
-// snippet-end
-//
-// snippet-begin create-device
+    var client = tempoiq.Client(key, secret, host);
+    // snippet-end
+}
 
-    client.createDevice(new tempoiq.Device("device", {
-        name: "My Awesome Device",
-        attributes: {building: "1234"},
+var getClient = function() {
+    var client = tempoiq.Client(creds.key, creds.secret, creds.hostname);
+    return client;
+}
+
+var initialize = function(done_cb) {
+  this.timeout(10000);
+  var exec = require('child_process').exec;
+  exec('python ../example-setup/initialize.py -n ' + creds.hostname +
+               ' -k ' + creds.key + ' -s ' + creds.secret, 
+      done_cb);
+}
+
+describe("Example code snippet tests", function() {
+  if (!process.env.SNIPPET) {
+    // skip em
+    return;
+  }
+
+  before(initialize);
+
+  it("create-device", function(done) {
+    var client = getClient();
+
+    // snippet-begin create-device
+    client.createDevice(new tempoiq.Device("thermostat.7", 
+      {
+        name: "Beta thermostat",
+        attributes: {
+          type: "thermostat",
+          customer: "Internal Dev"
+        },
         sensors: [
-          new tempoiq.Sensor("sensor1", {
-            name: "My Sensor",
-            attributes: {unit: "F"}
+          new tempoiq.Sensor("temperature", {
+            name: "Temperature",
+            attributes: {unit: "celsius"}
           }),
-          new tempoiq.Sensor("sensor2", {
-            name: "My Sensor2",
-            attributes: {unit: "C"}
+          new tempoiq.Sensor("humidity", {
+            name: "Relative humidity"
           })
         ]
       }),
       function(err, device) {
         if (err) throw err;
-        callback(device);
+        // Successfully created device
+        done();     // snippet-ignore
       }
     );
-// snippet-end
-// snippet-begin single-point
+    // snippet-end
+  });
 
-    var ts = new Date("2014-09-15T02:00:00Z");
+  it("single-point", function(done) {
+    var client = getClient();
+
+    // snippet-begin single-point
+    var ts = new Date("2015-01-10T00:00:00Z");
     var selection = {
-      devices: { key: "device1" },
+      devices: { key: "thermostat.1" },
       sensors: { key: "temperature" }
     };
 
     client.single(selection, "before", ts, null, function(err, data) {
       if (err) {
-        console.log("ERROR: "+ JSON.stringify(err));
+        // handle error
       } else {
         if (data.length == 0) {
-          console.log("No point found!");
+          // No point found
+          err = "No point found!"       // snippet-ignore  Be sure to test the code path with a found point
         } else {
           var row = data[0];
-          var point_time = row.t;
-          var point_value = row.data['device1']['temperature']
-          console.log("Found point: t="+point_time+" v="+point_value);
+          var point_timestamp = row.ts;
+          var point_value = row.value('thermostat.1', 'temperature');
+          assert.equal(point_timestamp.getFullYear(), 2015);     // snippet-ignore
+          // do something
         }
       }
+      done(err);                           // snippet-ignore
     });
-// snippet-end
+    // snippet-end
+  });
+});
+

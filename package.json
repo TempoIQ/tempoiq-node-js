@@ -9,7 +9,9 @@
     "mocha": "1.21.4"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "test-integration": "INTEGRATION=true mocha",
+    "test-snippets": "SNIPPET=true mocha test/test_snippets.js"
   },
   "repository": {
     "type": "git",
