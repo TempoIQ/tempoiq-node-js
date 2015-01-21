@@ -1,0 +1,3 @@
+[submodule "test/example-data"]
+	path = test/example-data
+	url = https://github.com/TempoIQ/example-data.git

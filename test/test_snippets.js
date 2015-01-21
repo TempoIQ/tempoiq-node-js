@@ -20,9 +20,9 @@ var getClient = function() {
 }
 
 var initialize = function(done_cb) {
-  this.timeout(10000);
+  this.timeout(30000);
   var exec = require('child_process').exec;
-  exec('python ../example-setup/initialize.py -n ' + creds.hostname +
+  exec('python ./test/example-data/initialize.py -n ' + creds.hostname +
                ' -k ' + creds.key + ' -s ' + creds.secret, 
       done_cb);
 }
