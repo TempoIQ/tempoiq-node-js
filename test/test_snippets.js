@@ -1,7 +1,10 @@
 var assert = require('assert');
 var tempoiq = require('../lib/tempoiq');
-var creds = require('./snippet-credentials.json');
+var creds = {};
 
+if (process.env.SNIPPET) {
+    creds = require('./snippet-credentials.json');
+}
 
 /*
  * A function block that never gets executed. For snippets that we don't
