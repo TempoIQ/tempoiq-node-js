@@ -3,7 +3,7 @@ var tempoiq = require('../lib/tempoiq');
 var creds = {};
 
 if (process.env.SNIPPET) {
-    creds = require('./snippet-credentials.json');
+  creds = require('./snippet-credentials.json');
 }
 
 /*
@@ -24,10 +24,18 @@ var getClient = function() {
 
 var initialize = function(done_cb) {
   this.timeout(30000);
+  console.log("Starting data initialization");
   var exec = require('child_process').exec;
   exec('python ./test/example-data/initialize.py -n ' + creds.hostname +
-               ' -k ' + creds.key + ' -s ' + creds.secret, 
-      done_cb);
+               ' -k ' + creds.key + ' -s ' + creds.secret,
+      function(err, stdout, stderr) {
+        if (err) {
+          console.log("error! stdout:" + stdout.toString());
+          console.log("stderr: " + stderr.toString());
+        }
+        done_cb(err);
+      } 
+  );
 }
 
 describe("Example code snippet tests", function() {
@@ -65,6 +73,40 @@ describe("Example code snippet tests", function() {
         done();     // snippet-ignore
       }
     );
+    // snippet-end
+  });
+
+  it('read-data', function(done) {
+    var client = getClient();
+    // snippet-begin read-data
+    var selection = {
+      devices: {
+        attributes: {
+          type: "thermostat",
+          region: "north"
+        }
+      },
+      sensors: {
+        key: "humidity"
+      }
+    };
+    var start = "2015-01-01T00:00:00Z";
+    var end = "2015-01-01T01:00:00Z";
+
+    client.read(selection, start, end, null, function(err, data) {
+      data.forEach(function(row) {
+        var timestamp = row.ts;
+        var values = [];        // List of sensor values at a timestamp
+        for (var device in row.values) {
+            for (var sensor in row.values[device]) {
+                values.push(row.values[device][sensor]);
+            }
+        }
+        assert(values.length > 0);  // snippet-ignore
+      });
+      assert(data.length > 0);    // snippet-ignore
+      done(err);                  // snippet-ignore
+    });
     // snippet-end
   });
 
