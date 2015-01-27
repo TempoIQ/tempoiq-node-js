@@ -1,7 +1,7 @@
 {
   "name": "tempoiq",
   "description": "TempoIQ HTTP NodeJS Client",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "TempoIQ <support@tempoiq.com>",
   "keywords": ["tempoiq", "time-series", "analytics", "tempodb"],
   "main": "lib/tempoiq.js",
