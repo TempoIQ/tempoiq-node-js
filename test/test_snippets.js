@@ -6,17 +6,6 @@ if (process.env.SNIPPET) {
   creds = require('./snippet-credentials.json');
 }
 
-/*
- * A function block that never gets executed. For snippets that we don't
- * want to test
- */
-var snippetsUntested = function() {
-    // snippet-begin create-client
-    var tempoiq = require('tempoiq');
-    var client = tempoiq.Client(key, secret, host);
-    // snippet-end
-}
-
 var getClient = function() {
     var client = tempoiq.Client(creds.key, creds.secret, creds.hostname);
     return client;
@@ -50,21 +39,15 @@ describe("Example code snippet tests", function() {
     var client = getClient();
 
     // snippet-begin create-device
-    client.createDevice(new tempoiq.Device("thermostat.7", 
+    client.createDevice(new tempoiq.Device("thermostat.0", 
       {
-        name: "Beta thermostat",
+        name: "Test Thermostat",
         attributes: {
-          type: "thermostat",
-          customer: "Internal Dev"
+          model: "v1"
         },
         sensors: [
-          new tempoiq.Sensor("temperature", {
-            name: "Temperature",
-            attributes: {unit: "celsius"}
-          }),
-          new tempoiq.Sensor("humidity", {
-            name: "Relative humidity"
-          })
+          new tempoiq.Sensor("temperature"),
+          new tempoiq.Sensor("humidity")
         ]
       }),
       function(err, device) {
@@ -76,18 +59,12 @@ describe("Example code snippet tests", function() {
     // snippet-end
   });
 
-  it('read-data', function(done) {
+  it('read-data-one-device', function(done) {
     var client = getClient();
-    // snippet-begin read-data
+    // snippet-begin read-data-one-device
     var selection = {
       devices: {
-        attributes: {
-          type: "thermostat",
-          region: "north"
-        }
-      },
-      sensors: {
-        key: "humidity"
+        key: "thermostat.0"
       }
     };
     var start = "2015-01-01T00:00:00Z";
