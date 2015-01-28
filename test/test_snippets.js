@@ -59,6 +59,32 @@ describe("Example code snippet tests", function() {
     // snippet-end
   });
 
+  it("write-data", function(done) {
+    var client = getClient();
+
+    // snippet-begin write-data
+    var device = "thermostat.0";
+    var t1 = new Date("2015-01-01T00:00:00Z");
+    var t2 = new Date("2015-01-01T00:00:05Z");
+
+    var data = new tempoiq.BulkWrite();
+
+    data.push(device, "temperature", 
+              new tempoiq.DataPoint(t1, 68));
+    data.push(device, "temperature",
+              new tempoiq.DataPoint(t2, 67.5));
+    data.push(device, "humidity",
+              new tempoiq.DataPoint(t1, 71.5));
+    data.push(device, "humidity",
+              new tempoiq.DataPoint(t2, 70));
+
+    client.writeBulk(data, function(err) {
+        if (err) throw err;
+        done();     // snippet-ignore
+    });
+    // snippet-end
+  });
+
   it('read-data-one-device', function(done) {
     var client = getClient();
     // snippet-begin read-data-one-device
@@ -67,10 +93,11 @@ describe("Example code snippet tests", function() {
         key: "thermostat.0"
       }
     };
-    var start = "2015-01-01T00:00:00Z";
-    var end = "2015-01-01T01:00:00Z";
+    var start = new Date("2015-01-01T00:00:00Z");
+    var end = new Date("2015-01-01T01:00:00Z");
 
     client.read(selection, start, end, null, function(err, data) {
+      if (err) throw err;
       data.forEach(function(row) {
         var timestamp = row.ts;
         var values = [];        // List of sensor values at a timestamp
