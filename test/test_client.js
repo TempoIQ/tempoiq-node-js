@@ -68,8 +68,8 @@ var _deleteDevices = function(client, callback) {
   };
   client._session.stub("DELETE", "/v2/devices", 200, JSON.stringify(stubbed_body), {});
 
-  var selection = {devices: {attributes: {}}};
-  selection.devices.attributes[devicePrefix] = devicePrefix;
+  var selection = {devices: {or: [{attributes: {}}, {key: devicePrefix + "upserted"}]}};
+  selection.devices.or[0].attributes[devicePrefix] = devicePrefix;
 
   client.deleteDevices(selection, function(err, summary) {
     if (err) throw err;
@@ -313,30 +313,46 @@ describe("Client", function() {
       });
     });
 
-    it("handles partial write failure", function(done) {
+    it("handles different upsert statuses", function(done) {
       var client = _getClient();
-      _createDevice(client, "device1", function(device) {
+      _createDevice(client, "device1", function(device1) {
+        _createDevice(client, "device2", function(device2) {
 
-        var ts = new Date(2012,1,1);
-        var deviceKey = device.key;
-        var sensorKey = device.sensors[0].key;
+          var ts = new Date(2012,1,1);
+          var device1Key = device1.key;
+          var sensor1Key = device1.sensors[0].key;
+          var device2Key = devicePrefix + "device2"; 
+          var device3Key = devicePrefix + "upserted";
 
-        var stubbedBody = {};
-        stubbedBody[devicePrefix + "device1"] = {
-          success: false,
-          message: "error writing to storage: FERR_NO_SENSOR: No sensor with key found in device."
-        };
-        client._session.stub("POST", "/v2/write", 207, JSON.stringify(stubbedBody));
+          var stubbedBody = {};
+          stubbedBody[device1Key] = {
+            success: true,
+            device_state: "existing",
+            message: null
+          };
+          stubbedBody[device2Key] = {
+            success: true,
+            device_state: "modified",
+            message: null
+          };
+          stubbedBody[device3Key] = {
+            success: true,
+            device_state: "created",
+            message: null
+          };
+          client._session.stub("POST", "/v2/write", 207, JSON.stringify(stubbedBody));
 
-        var write = new tempoiq.BulkWrite;
-        write.push(deviceKey, sensorKey, new tempoiq.DataPoint(ts, 1.23));
-        write.push(deviceKey, "not_here", new tempoiq.DataPoint(ts, 2.34));
-        client.writeBulk(write, function(err, status) {
-          if (err) throw err;
-          assert(status.isPartialSuccess());
-          assert(!status.isSuccess());
-          assert(status.failures()[deviceKey] != undefined);
-          done();
+          var write = new tempoiq.BulkWrite;
+          write.push(device1Key, sensor1Key, new tempoiq.DataPoint(ts, 1.23));
+          write.push(device2Key, "foobar", new tempoiq.DataPoint(ts, 1.23));
+          write.push(device3Key, "foobar", new tempoiq.DataPoint(ts, 1.23));
+          client.writeBulk(write, function(err, status) {
+            if (err) throw err;
+            assert(status.existing()[device1Key].success === true);
+            assert(status.modified()[device2Key].success === true);
+            assert(status.created()[device3Key].success === true);
+            done();
+          });
         });
       });
     });
@@ -373,7 +389,13 @@ describe("Client", function() {
         var sensorKey1 = device.sensors[0].key;
         var sensorKey2 = device.sensors[1].key;
 
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
@@ -430,7 +452,13 @@ describe("Client", function() {
         var sensorKey1 = device.sensors[0].key;
         var sensorKey2 = device.sensors[1].key;
 
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
@@ -483,8 +511,14 @@ describe("Client", function() {
         var sensorKey1 = device.sensors[0].key;
         var sensorKey2 = device.sensors[1].key;
 
-        client._session.stub("POST", "/v2/write", 200);
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
@@ -564,7 +598,13 @@ describe("Client", function() {
         var sensorKey1 = device.sensors[0].key;
         var sensorKey2 = device.sensors[1].key;
 
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
@@ -622,7 +662,13 @@ describe("Client", function() {
         var sensorKey2 = device.sensors[1].key;
         var pipeline = new tempoiq.Pipeline;
 
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
@@ -672,7 +718,13 @@ describe("Client", function() {
         var sensorKey2 = device.sensors[1].key;
         var read_ts = new Date(2012, 1, 1, 2);
 
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
@@ -728,7 +780,13 @@ describe("Client", function() {
         var sensorKey2 = device.sensors[1].key;
         var pipeline = new tempoiq.Pipeline;
 
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
@@ -785,7 +843,13 @@ describe("Client", function() {
         var sensorKey2 = device.sensors[1].key;
         var pipeline = new tempoiq.Pipeline;
 
-        client._session.stub("POST", "/v2/write", 200);
+        var stubbedBody = {};
+        stubbedBody[deviceKey] = {
+          success: true,
+          device_state: "existing",
+          message: null
+        };
+        client._session.stub("POST", "/v2/write", 200, JSON.stringify(stubbedBody));
 
         var d1 = {}
         d1[sensorKey1] = 4.0;
