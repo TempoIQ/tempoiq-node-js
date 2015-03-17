@@ -35,6 +35,20 @@ describe("Example code snippet tests", function() {
 
   before(initialize);
 
+  it("create-client", function(done) {
+    // snippet-begin create-client
+    var tempoiq = require('tempoiq');
+    var creds = {
+      key: "your-key",
+      secret: "your-secret",
+      hostname: "your-hostname"
+    };
+    var client = tempoiq.Client(creds.key, creds.secret, creds.hostname);
+    done(); //snippet-ignore
+    return client;
+    // snippet-end
+  });
+
   it("create-device", function(done) {
     var client = getClient();
 
@@ -58,6 +72,65 @@ describe("Example code snippet tests", function() {
     );
     // snippet-end
   });
+
+  it("get-devices", function(done) {
+    var client = getClient();
+    // snippet-begin get-devices
+    client.listDevices({devices: {attribute: {region: 'south'}}}, function(err, devices) {
+      if (err) throw err;
+      for (var device in devices) {
+        console.log(device.key);
+      }
+      done(); // snippet-ignore
+    });
+    // snippet-end
+  }
+
+  it("get-devices", function(done) {
+    var client = getClient();
+    // snippet-begin get-device
+    client.getDevice("key1", function(err, device) {
+      if (err) throw err;
+      console.log(device.key);
+      done(); // snippet-ignore
+    });
+    // snippet-end
+  }
+
+  it("update-device", function(done) {
+    var client = getClient();
+    // snippet-begin update-device
+    client.getDevice("key1", function(err, device) {
+      if (err) throw err;
+      device.attributes['customer'] = 'internal-test';
+      device.attributes['region'] = 'east';
+      client.updateDevice(device, function(err, updated) {
+        console.log('updated device: ' + update.key);
+        done(); // snippet-ignore
+      });
+    });
+    // snippet-end
+  }
+
+  it("delete-devices", function(done) {
+    var client = getClient();
+    // snippet-begin delete-devices 
+    client.deleteDevices({devices: {attribute: {region: 'south'}}}, function(err, result) {
+      if (err) throw err;
+      done(); // snippet-ignore
+    });
+    // snippet-end
+  }
+
+  it("delete-device", function(done) {
+    var client = getClient();
+    // snippet-begin delete-device
+    client.deleteDevices("key1", function(err, result) {
+      if (err) throw err;
+      done(); // snippet-ignore
+    });
+    // snippet-end
+  }
 
   it("write-data", function(done) {
     var client = getClient();
@@ -140,6 +213,77 @@ describe("Example code snippet tests", function() {
         }
       }
       done(err);                           // snippet-ignore
+    });
+    // snippet-end
+  });
+
+  it("delete-data", function(done) {
+    var client = getClient();
+
+    // snippet-begin delete-data 
+    var start = new Date("2015-01-01T00:00:00Z");
+    var end = new Date("2015-01-10T00:00:00Z");
+    var deviceKey = 'thermostat.1';
+    var sensorKey = 'temperature';
+
+    client.deleteDatapoints(deviceKey, sensorKey, start, end, function(err, result) {
+      if (err) {
+        throw err
+      } else {
+        console.log(result);
+      }
+      done(err);                           // snippet-ignore
+    });
+    // snippet-end
+  });
+
+  it("pipeline", function(done) {
+    var client = getClient();
+
+    // snippet-begin pipeline 
+    var pipeline = new tempoiq.Pipeline;
+    pipeline.rollup("sum", "1day", start);
+    pipeline.aggregate("mean");
+
+    var selection = {
+      devices: { key: "thermostat.1" },
+      sensors: { key: "temperature" }
+    };
+
+    client.read(selection, start, end, pipeline, {streamed: true}, function(res) {
+      res.on("data", function(row) {
+        console.log(row);
+      }).on("end", function() {
+        //call any cleanup functions here
+        done(); // snippet-ignore
+      }).on("error", function() {
+        throw err;
+      });
+    });
+    // snippet-end
+  });
+
+  it("search", function(done) {
+    var client = getClient();
+
+    // snippet-begin search 
+    var pipeline = new tempoiq.Pipeline;
+    pipeline.aggregate("mean");
+
+    var selection = {
+      devices: { attributes: {building: "headquarters" }},
+      sensors: { key: "temperature" }
+    };
+
+    client.read(selection, start, end, pipeline, {streamed: true}, function(res) {
+      res.on("data", function(row) {
+        console.log(row);
+      }).on("end", function() {
+        //call any cleanup functions here
+        done(); // snippet-ignore
+      }).on("error", function() {
+        throw err;
+      });
     });
     // snippet-end
   });
