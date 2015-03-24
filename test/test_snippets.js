@@ -84,7 +84,7 @@ describe("Example code snippet tests", function() {
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
   it("get-devices", function(done) {
     var client = getClient();
@@ -95,7 +95,7 @@ describe("Example code snippet tests", function() {
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
   it("update-device", function(done) {
     var client = getClient();
@@ -110,7 +110,7 @@ describe("Example code snippet tests", function() {
       });
     });
     // snippet-end
-  }
+  });
 
   it("delete-devices", function(done) {
     var client = getClient();
@@ -120,7 +120,7 @@ describe("Example code snippet tests", function() {
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
   it("delete-device", function(done) {
     var client = getClient();
@@ -130,7 +130,7 @@ describe("Example code snippet tests", function() {
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
   it("write-data", function(done) {
     var client = getClient();
