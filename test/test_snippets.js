@@ -2,6 +2,11 @@ var assert = require('assert');
 var tempoiq = require('../lib/tempoiq');
 var creds = {};
 
+/*
+ * Note: Snippet integration tests must be run against a backend with 
+ * the standard example data loaded into it: https://github.com/TempoIQ/example-data
+ */
+
 if (process.env.SNIPPET) {
   creds = require('./snippet-credentials.json');
 }
@@ -9,22 +14,6 @@ if (process.env.SNIPPET) {
 var getClient = function() {
     var client = tempoiq.Client(creds.key, creds.secret, creds.hostname);
     return client;
-}
-
-var initialize = function(done_cb) {
-  this.timeout(30000);
-  console.log("Starting data initialization");
-  var exec = require('child_process').exec;
-  exec('python ./test/example-data/initialize.py -n ' + creds.hostname +
-               ' -k ' + creds.key + ' -s ' + creds.secret,
-      function(err, stdout, stderr) {
-        if (err) {
-          console.log("error! stdout:" + stdout.toString());
-          console.log("stderr: " + stderr.toString());
-        }
-        done_cb(err);
-      } 
-  );
 }
 
 
@@ -48,7 +37,6 @@ describe("Example code snippet tests", function() {
     return;
   }
 
-  //before(initialize);
   it("create-device", function(done) {
     var client = getClient();
 
