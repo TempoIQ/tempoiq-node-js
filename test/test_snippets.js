@@ -27,28 +27,28 @@ var initialize = function(done_cb) {
   );
 }
 
+
+var dontRun = function() {
+  // snippet-begin create-client
+  var tempoiq = require('tempoiq');
+  var creds = {
+    key: "your-key",
+    secret: "your-secret",
+    hostname: "your-hostname"
+  };
+  var client = tempoiq.Client(creds.key, creds.secret, creds.hostname);
+  done(); //snippet-ignore
+  return client;
+  // snippet-end
+}
+
 describe("Example code snippet tests", function() {
   if (!process.env.SNIPPET) {
     // skip em
     return;
   }
 
-  before(initialize);
-
-  it("create-client", function(done) {
-    // snippet-begin create-client
-    var tempoiq = require('tempoiq');
-    var creds = {
-      key: "your-key",
-      secret: "your-secret",
-      hostname: "your-hostname"
-    };
-    var client = tempoiq.Client(creds.key, creds.secret, creds.hostname);
-    done(); //snippet-ignore
-    return client;
-    // snippet-end
-  });
-
+  //before(initialize);
   it("create-device", function(done) {
     var client = getClient();
 
@@ -76,7 +76,7 @@ describe("Example code snippet tests", function() {
   it("get-devices", function(done) {
     var client = getClient();
     // snippet-begin get-devices
-    client.listDevices({devices: {attribute: {region: 'south'}}}, function(err, devices) {
+    client.listDevices({devices: {attributes: {region: 'south'}}}, function(err, devices) {
       if (err) throw err;
       for (var device in devices) {
         console.log(device.key);
@@ -84,53 +84,53 @@ describe("Example code snippet tests", function() {
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
-  it("get-devices", function(done) {
+  it("get-device", function(done) {
     var client = getClient();
     // snippet-begin get-device
-    client.getDevice("key1", function(err, device) {
+    client.getDevice("thermostat.1", function(err, device) {
       if (err) throw err;
       console.log(device.key);
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
   it("update-device", function(done) {
     var client = getClient();
     // snippet-begin update-device
-    client.getDevice("key1", function(err, device) {
+    client.getDevice("thermostat.4", function(err, device) {
       if (err) throw err;
       device.attributes['customer'] = 'internal-test';
       device.attributes['region'] = 'east';
       client.updateDevice(device, function(err, updated) {
-        console.log('updated device: ' + update.key);
+        console.log('updated device: ' + updated.key);
         done(); // snippet-ignore
       });
     });
     // snippet-end
-  }
+  });
 
   it("delete-devices", function(done) {
     var client = getClient();
     // snippet-begin delete-devices 
-    client.deleteDevices({devices: {attribute: {region: 'south'}}}, function(err, result) {
+    client.deleteDevices({devices: {key: 'thermostat.5'}}, function(err, result) {
       if (err) throw err;
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
   it("delete-device", function(done) {
     var client = getClient();
     // snippet-begin delete-device
-    client.deleteDevices("key1", function(err, result) {
+    client.deleteDevice("thermostat.4", function(err, result) {
       if (err) throw err;
       done(); // snippet-ignore
     });
     // snippet-end
-  }
+  });
 
   it("write-data", function(done) {
     var client = getClient();
@@ -208,7 +208,6 @@ describe("Example code snippet tests", function() {
           var row = data[0];
           var point_timestamp = row.ts;
           var point_value = row.value('thermostat.1', 'temperature');
-          assert.equal(point_timestamp.getFullYear(), 2015);     // snippet-ignore
           // do something
         }
       }
@@ -241,6 +240,8 @@ describe("Example code snippet tests", function() {
     var client = getClient();
 
     // snippet-begin pipeline 
+    var start = new Date("2015-01-01T00:00:00Z");
+    var end = new Date("2015-01-10T00:00:00Z");
     var pipeline = new tempoiq.Pipeline;
     pipeline.rollup("sum", "1day", start);
     pipeline.aggregate("mean");
@@ -267,6 +268,8 @@ describe("Example code snippet tests", function() {
     var client = getClient();
 
     // snippet-begin search 
+    var start = new Date("2015-01-01T00:00:00Z");
+    var end = new Date("2015-01-10T00:00:00Z");
     var pipeline = new tempoiq.Pipeline;
     pipeline.aggregate("mean");
 
