@@ -28,12 +28,12 @@ client.createDevice(new tempoiq.Device("devicekey1"), function(err, device) {
 To run the test suite against local stubs:
 
 ```
-mocha
+npm run test
 ```
 
 If you'd like to run the test suite against an actual live backend,
 edit `test/integration-credentials.json`, and run:
 
 ```
-INTEGRATION=true mocha
+npm run test-integration
 ```
