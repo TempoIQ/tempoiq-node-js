@@ -6,7 +6,9 @@
   "keywords": ["tempoiq", "time-series", "analytics", "tempodb"],
   "main": "lib/tempoiq.js",
   "devDependencies": {
-    "mocha": "1.21.4"
+    "mocha": "1.21.4",
+    "istanbul": "*",
+    "xunit-file": "*"
   },
   "scripts": {
     "test": "mocha",
